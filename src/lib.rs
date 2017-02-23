@@ -1,3 +1,6 @@
+mod interface;
+use interface::DAGInterface;
+
 struct edge<T> {
     from: u64,
     to: u64,
@@ -16,6 +19,9 @@ impl <T> DAG<T> {
             edges: Vec::new()
         }
     }
+}
+
+impl <T> DAGInterface<T> for DAG<T> {
 
     fn add_vertex(&mut self, w: T) -> u64 {
         self.vertices.push(w);
