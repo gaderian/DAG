@@ -1,26 +1,28 @@
 mod interface;
 use interface::DAGInterface;
 
-#[derive(PartialEq,Debug)]
+type ID = u64;
+
+#[derive(PartialEq,Debug,Clone)]
 struct Edge<T> {
-    from: u64,
-    to: u64,
+    from: ID,
+    to: ID,
     weight: T,
 }
 
-#[derive(PartialEq,Debug)]
+#[derive(PartialEq,Debug,Clone)]
 struct Vertex<T> {
-    id: u64,
+    id: ID,
     weight: T,
 }
 
-pub struct DAG<T> {
+pub struct DAG<T:Clone> {
     vertices: Vec<Vertex<T>>,
     edges: Vec<Edge<T>>,
-    next_id: u64,
+    next_id: ID,
 }
 
-impl <T> DAG<T> {
+impl <T:Clone> DAG<T> {
     pub fn new() -> DAG<T> {
         DAG {
             vertices: Vec::new(),
@@ -28,17 +30,24 @@ impl <T> DAG<T> {
             next_id: 0
         }
     }
+
+    fn topologogal_order(&self) -> Vec<ID> {
+        let mut no_incomming: Vec<Vertex<T>> = Vec::new();
+        let mut remaining_v: Vec<Vertex<T>> = self.vertices[..].to_owned();
+        let mut remaining_e: Vec<Edge<T>> = self.edges[..].to_owned();
+        vec![]
+    }
 }
 
-impl <T> DAGInterface<T> for DAG<T> {
+impl <T:Clone> DAGInterface<T> for DAG<T> {
 
-    fn add_vertex(&mut self, w: T) -> u64 {
+    fn add_vertex(&mut self, w: T) -> ID {
         self.vertices.push(Vertex{id: self.next_id, weight: w});
         self.next_id += 1;
         self.next_id-1
     }
 
-    fn add_edge(&mut self, a: u64, b: u64, w: T) {
+    fn add_edge(&mut self, a: ID, b: ID, w: T) {
         self.edges.push(Edge {from: a, to: b, weight: w});
     }
 }
