@@ -1,5 +1,5 @@
 [package]
-name = "lab2-DAG"
+name = "lab2-dag"
 version = "0.1.0"
 authors = ["erikm <erikm@cs.umu.se>"]
 
