@@ -150,9 +150,8 @@ mod tests {
         let a = dag.add_vertex(5);
 
         //Err is the desired result from add.
-        match dag.add_edge(a,a,19) {
-            Err(_) => assert_eq!(1, 1),
-            Ok(_) => assert_eq!(1, 2)
+        if let Ok(_) = dag.add_edge(a,a,19) {
+            panic!("Should return error on edge to itself");
         }
     }
 
