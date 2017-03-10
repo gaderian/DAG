@@ -1,5 +1,7 @@
 mod interface;
 use interface::DAGInterface;
+use std::cmp::Ordering;
+use std::ops::Add;
 type ID = u64;
 
 #[derive(PartialEq,Debug,Clone)]
@@ -21,7 +23,7 @@ pub struct DAG<T:Clone> {
     next_id: ID,
 }
 
-impl <T:Clone> DAG<T> {
+impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
     pub fn new() -> DAG<T> {
         DAG {
             vertices: Vec::new(),
@@ -86,9 +88,52 @@ impl <T:Clone> DAG<T> {
         Ok(result)
     }
 
+    pub fn weight_of_longest_path<F1, F2>(&self, from: ID, to: ID, v_sum: &F1, e_sum: &F2) -> Option<T>
+        where F1: Fn(T) -> T,
+              F2: Fn(T) -> T {
+
+        let mut sum: T = self.weight_of_vertex(from);
+
+        let mut weights: Vec<Option<T>> = Vec::new();
+
+        for i in 0..self.edges.len() {
+            let Edge {from: a, to: b, ref weight} = self.edges[i];
+            if a == from {
+                match self.weight_of_longest_path(b, to, v_sum, e_sum) {
+                    Some(w) => weights.push(Some(weight.clone() + w)),
+                    None    => (),
+                }
+            }
+        }
+
+        if let Some(high) = DAG::highest(weights) {
+            sum = sum + high;
+        }
+
+        Some(sum)
+    }
+
+    fn weight_of_vertex(&self, id: ID) -> T {
+        for i in 0..self.vertices.len() {
+            let Vertex {id: my_id, weight: ref my_weight} = self.vertices[i];
+            if my_id == id {
+                return my_weight.clone();
+            }
+        }
+        panic!("Vertex does not exist")
+    }
+
+    fn highest(v: Vec<Option<T>>) -> Option<T> {
+        let mut max: Option<T> = None;
+        for i in v {
+            max = if max.cmp(&i) == Ordering::Greater { max } else { i }; 
+        }
+        max
+    }
+
 }
 
-impl <T:Clone> DAGInterface<T> for DAG<T> {
+impl <T:Clone+Add> DAGInterface<T> for DAG<T> {
 
     fn add_vertex(&mut self, w: T) -> ID {
         self.vertices.push(Vertex{id: self.next_id, weight: w});
@@ -169,5 +214,21 @@ mod tests {
         dag.add_edge(c, a, 5);
         dag.add_edge(c, b, 7);
         assert_eq!(Ok(vec![c,a,b]), dag.topological_order());
+    }
+
+    #[test]
+    fn test_longest_path() {
+        let mut dag: DAG<u8> = DAG::new();
+        let a = dag.add_vertex(5);
+        let b = dag.add_vertex(8);
+
+        dag.add_edge(a, b, 10);
+        assert_eq!(23, dag.weight_of_longest_path(a, b, &|i| i, &|i| i).unwrap());
+
+        let c = dag.add_vertex(2);
+        let _ = dag.add_edge(a, c, 5);
+        let _ = dag.add_edge(c, b, 5);
+
+        assert_eq!(25, dag.weight_of_longest_path(a, b, &|i| i, &|i| i).unwrap());
     }
 }
