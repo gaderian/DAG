@@ -15,14 +15,14 @@ struct Vertex<T> {
     weight: T,
 }
 
-pub struct DAG<T1:Clone, T2:Clone> {
-    vertices: Vec<Vertex<T1>>,
-    edges: Vec<Edge<T2>>,
+pub struct DAG<T:Clone> {
+    vertices: Vec<Vertex<T>>,
+    edges: Vec<Edge<T>>,
     next_id: ID,
 }
 
-impl <T1:Clone, T2:Clone> DAG<T1,T2> {
-    pub fn new() -> DAG<T1, T2> {
+impl <T:Clone> DAG<T> {
+    pub fn new() -> DAG<T> {
         DAG {
             vertices: Vec::new(),
             edges: Vec::new(),
@@ -30,7 +30,7 @@ impl <T1:Clone, T2:Clone> DAG<T1,T2> {
         }
     }
 
-    fn split_remaining_v(vec: Vec<Vertex<T1>>, edges: & Vec<Edge<T2>>) -> (Vec<Vertex<T1>>, Vec<Vertex<T1>>) {
+    fn split_remaining_v(vec: Vec<Vertex<T>>, edges: & Vec<Edge<T>>) -> (Vec<Vertex<T>>, Vec<Vertex<T>>) {
         let v_iter = vec.clone().into_iter();
         let remaining = vec.into_iter().filter(|&Vertex{id: my_id, weight: _}| {
                                      for i in 0..(edges.len()) {
@@ -53,9 +53,9 @@ impl <T1:Clone, T2:Clone> DAG<T1,T2> {
 
     pub fn topological_order(&self) -> Result<Vec<ID>, &'static str> {
         let mut result: Vec<ID> = Vec::new();
-        let mut no_incomming: Vec<Vertex<T1>> = Vec::new();
-        let mut remaining_v: Vec<Vertex<T1>> = self.vertices.clone();
-        let mut remaining_e: Vec<Edge<T2>> = self.edges.clone();
+        let mut no_incomming: Vec<Vertex<T>> = Vec::new();
+        let mut remaining_v: Vec<Vertex<T>> = self.vertices.clone();
+        let mut remaining_e: Vec<Edge<T>> = self.edges.clone();
 
         let (mut hey, remaining) = DAG::split_remaining_v(remaining_v, &remaining_e);
         remaining_v = remaining;
@@ -88,15 +88,15 @@ impl <T1:Clone, T2:Clone> DAG<T1,T2> {
 
 }
 
-impl <T1:Clone, T2:Clone> DAGInterface<T1,T2> for DAG<T1, T2> {
+impl <T:Clone> DAGInterface<T> for DAG<T> {
 
-    fn add_vertex(&mut self, w: T1) -> ID {
+    fn add_vertex(&mut self, w: T) -> ID {
         self.vertices.push(Vertex{id: self.next_id, weight: w});
         self.next_id += 1;
         self.next_id-1
     }
 
-    fn add_edge(&mut self, a: ID, b: ID, w: T2) -> Result<bool, &'static str> {
+    fn add_edge(&mut self, a: ID, b: ID, w: T) -> Result<bool, &'static str> {
         if a == b {
             return Err("false");
         }
@@ -117,14 +117,14 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let dag: DAG<u8,u8> = DAG::new();
+        let dag: DAG<u8> = DAG::new();
         assert!(dag.vertices.is_empty());
         assert!(dag.edges.is_empty());
     }
 
     #[test]
     fn test_add_vertex() {
-        let mut dag: DAG<u8,u8> = DAG::new();
+        let mut dag: DAG<u8> = DAG::new();
         let id = dag.add_vertex(8);
 
         assert_eq!(1, dag.vertices.len());
@@ -133,7 +133,7 @@ mod tests {
 
     #[test]
     fn test_add_edge() {
-        let mut dag: DAG<u8,u8> = DAG::new();
+        let mut dag: DAG<u8> = DAG::new();
         let a = dag.add_vertex(5);
         let b = dag.add_vertex(8);
 
@@ -146,7 +146,7 @@ mod tests {
 
     #[test]
     fn test_edge_to_self() {
-        let mut dag: DAG<u8,u8> = DAG::new();
+        let mut dag: DAG<u8> = DAG::new();
         let a = dag.add_vertex(5);
 
         //Err is the desired result from add.
@@ -157,7 +157,7 @@ mod tests {
 
     #[test]
     fn test_topological() {
-        let mut dag: DAG<u8, u8> = DAG::new();
+        let mut dag: DAG<u8> = DAG::new();
         let a = dag.add_vertex(5);
         let b = dag.add_vertex(8);
 
