@@ -30,7 +30,7 @@ impl <T1:Clone, T2:Clone> DAG<T1,T2> {
         }
     }
 
-    fn split_remaining_v(mut vec: Vec<Vertex<T1>>, edges: & Vec<Edge<T2>>) -> (Vec<Vertex<T1>>, Vec<Vertex<T1>>) {
+    fn split_remaining_v(vec: Vec<Vertex<T1>>, edges: & Vec<Edge<T2>>) -> (Vec<Vertex<T1>>, Vec<Vertex<T1>>) {
         let v_iter = vec.clone().into_iter();
         let remaining = vec.into_iter().filter(|&Vertex{id: my_id, weight: _}| {
                                      for i in 0..(edges.len()) {
@@ -51,13 +51,13 @@ impl <T1:Clone, T2:Clone> DAG<T1,T2> {
         (filtered, remaining)
     }
 
-    pub fn topological_order(&self) -> Vec<ID> {
+    pub fn topological_order(&self) -> Result<Vec<ID>, &'static str> {
         let mut result: Vec<ID> = Vec::new();
         let mut no_incomming: Vec<Vertex<T1>> = Vec::new();
         let mut remaining_v: Vec<Vertex<T1>> = self.vertices.clone();
         let mut remaining_e: Vec<Edge<T2>> = self.edges.clone();
 
-        let (mut hey, mut remaining) = DAG::split_remaining_v(remaining_v, &remaining_e);
+        let (mut hey, remaining) = DAG::split_remaining_v(remaining_v, &remaining_e);
         remaining_v = remaining;
 
         no_incomming.append(&mut hey);
@@ -74,12 +74,16 @@ impl <T1:Clone, T2:Clone> DAG<T1,T2> {
                 }
                 i += 1;
             }
-            let (mut hey, mut remaining) = DAG::split_remaining_v(remaining_v, &remaining_e);
+            let (mut hey, remaining) = DAG::split_remaining_v(remaining_v, &remaining_e);
             remaining_v = remaining;
             no_incomming.append(&mut hey);
         }
 
-        result
+        if !remaining_e.is_empty() {
+            return Err("There exists a cycle!");
+        }
+
+        Ok(result)
     }
 
 }
@@ -159,6 +163,12 @@ mod tests {
         let b = dag.add_vertex(8);
 
         dag.add_edge(a, b, 10);
-        println!("{:?}", dag.topological_order()); 
+        assert_eq!(Ok(vec![a,b]), dag.topological_order()); 
+
+        let c = dag.add_vertex(10);
+        
+        dag.add_edge(c, a, 5);
+        dag.add_edge(c, b, 7);
+        assert_eq!(Ok(vec![c,a,b]), dag.topological_order());
     }
 }
