@@ -182,7 +182,7 @@ mod tests {
         let a = dag.add_vertex(5);
         let b = dag.add_vertex(8);
 
-        dag.add_edge(a, b, 10);
+        let _ = dag.add_edge(a, b, 10);
         assert_eq!(1, dag.edges.len());
 
         let tmp = Edge { from: a, to: b, weight: 10 };
@@ -206,13 +206,13 @@ mod tests {
         let a = dag.add_vertex(5);
         let b = dag.add_vertex(8);
 
-        dag.add_edge(a, b, 10);
+        let _ = dag.add_edge(a, b, 10);
         assert_eq!(Ok(vec![a,b]), dag.topological_order()); 
 
         let c = dag.add_vertex(10);
         
-        dag.add_edge(c, a, 5);
-        dag.add_edge(c, b, 7);
+        let _ = dag.add_edge(c, a, 5);
+        let _ = dag.add_edge(c, b, 7);
         assert_eq!(Ok(vec![c,a,b]), dag.topological_order());
     }
 
@@ -222,7 +222,7 @@ mod tests {
         let a = dag.add_vertex(5);
         let b = dag.add_vertex(8);
 
-        dag.add_edge(a, b, 10);
+        let _ = dag.add_edge(a, b, 10);
         assert_eq!(23, dag.weight_of_longest_path(a, b, &|i| i, &|i| i).unwrap());
 
         let c = dag.add_vertex(2);
