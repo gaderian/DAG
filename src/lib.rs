@@ -34,22 +34,28 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
 
     fn split_remaining_v(vec: Vec<Vertex<T>>, edges: & Vec<Edge<T>>) -> (Vec<Vertex<T>>, Vec<Vertex<T>>) {
         let v_iter = vec.clone().into_iter();
-        let remaining = vec.into_iter().filter(|&Vertex{id: my_id, weight: _}| {
-                                     for i in 0..(edges.len()) {
-                                         let Edge { from: _, to: destination, weight: _} = edges[i];
-                                         if my_id == destination {
-                                             return true
-                                         }
-                                     };
-                                     false}).collect();
-        let filtered = v_iter.filter(|&Vertex{id: my_id, weight: _}| {
-                                     for i in 0..(edges.len()) {
-                                         let Edge { from: _, to: destination, weight: _} = edges[i];
-                                         if my_id == destination {
-                                             return false
-                                         }
-                                     };
-                                     true}).collect();
+        let remaining = vec.into_iter()
+            .filter(|&Vertex{id: my_id, weight: _}| {
+                         for i in 0..(edges.len()) {
+                             let Edge { from: _, to: destination, weight: _} = edges[i];
+                             if my_id == destination {
+                                 return true
+                             }
+                         };
+                         false})
+            .collect();
+
+        let filtered = v_iter
+            .filter(|&Vertex{id: my_id, weight: _}| {
+                         for i in 0..(edges.len()) {
+                             let Edge { from: _, to: destination, weight: _} = edges[i];
+                             if my_id == destination {
+                                 return false
+                             }
+                         };
+                         true})
+            .collect();
+
         (filtered, remaining)
     }
 
@@ -293,13 +299,13 @@ mod tests {
         let b = dag.add_vertex(8);
 
         let _ = dag.add_edge(a, b, 10);
-        assert_eq!(23, dag.weight_of_longest_path(a, b, &|i| i, &|i| i).unwrap());
+        assert_eq!(23, dag.weight_of_longest_path(a, b, func, func).unwrap());
 
         let c = dag.add_vertex(2);
         let _ = dag.add_edge(a, c, 5);
         let _ = dag.add_edge(c, b, 5);
 
-        assert_eq!(25, dag.weight_of_longest_path(a, b, &|i| i, &|i| i).unwrap());
+        assert_eq!(25, dag.weight_of_longest_path(a, b, func, func).unwrap());
 
         assert_eq!(None, dag.weight_of_longest_path(c, a, func, func));
     }
