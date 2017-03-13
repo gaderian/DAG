@@ -59,7 +59,69 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         (filtered, remaining)
     }
 
-    pub fn topological_order(&self) -> Result<Vec<ID>, &'static str> {
+    fn weight_of_vertex(&self, id: ID) -> T {
+        for i in 0..self.vertices.len() {
+            let Vertex {id: my_id, weight: ref my_weight} = self.vertices[i];
+            if my_id == id {
+                return my_weight.clone();
+            }
+        }
+        panic!("Vertex does not exist")
+    }
+
+    fn highest(v: Vec<Option<T>>) -> Option<T> {
+        let mut max: Option<T> = None;
+        for i in v {
+            max = if max.cmp(&i) == Ordering::Greater { max } else { i };
+        }
+        max
+    }
+
+    /**
+     * A function that checks wether the graph is cyclic or not. Returns true
+     * if the graph is cyclic, false if not.
+     */
+    fn check_cyclicity(target :u64, current :u64, edges :&Vec<Edge<T>>) -> bool {
+        for i in 0..edges.len() {
+            if edges[i].from == current && edges[i].to == target {
+                return true;
+            } else {
+                if edges[i].from == current {
+                    if DAG::check_cyclicity(target, edges[i].to, edges) {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+}
+
+impl <T:Clone+Add<Output=T>+Ord> DAGInterface<T> for DAG<T> {
+
+    fn add_vertex(&mut self, w: T) -> ID {
+        self.vertices.push(Vertex{id: self.next_id, weight: w});
+        self.next_id += 1;
+        self.next_id-1
+    }
+
+    fn add_edge(&mut self, a: ID, b: ID, w: T) -> Result<bool, &'static str> {
+        self.edges.push(Edge{from: a, to: b, weight: w});
+        if a == b {
+            self.edges.pop();
+            return Err("false");
+        }
+
+        if DAG::check_cyclicity(a,b,&self.edges) {
+            self.edges.pop();
+            return Err("false");
+        }
+
+        Ok(true)
+    }
+
+    fn topological_order(&self) -> Result<Vec<ID>, &'static str> {
         let mut result: Vec<ID> = Vec::new();
         let mut no_incomming: Vec<Vertex<T>> = Vec::new();
         let mut remaining_v: Vec<Vertex<T>> = self.vertices.clone();
@@ -94,7 +156,8 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         Ok(result)
     }
 
-    pub fn weight_of_longest_path<F1, F2>(&self, from: ID, to: ID, v_sum: &F1, e_sum: &F2) -> Option<T>
+
+    fn weight_of_longest_path<F1, F2>(&self, from: ID, to: ID, v_sum: &F1, e_sum: &F2) -> Option<T>
         where F1: Fn(T) -> T,
               F2: Fn(T) -> T {
 
@@ -123,68 +186,6 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         }
 
         Some(sum)
-    }
-
-    fn weight_of_vertex(&self, id: ID) -> T {
-        for i in 0..self.vertices.len() {
-            let Vertex {id: my_id, weight: ref my_weight} = self.vertices[i];
-            if my_id == id {
-                return my_weight.clone();
-            }
-        }
-        panic!("Vertex does not exist")
-    }
-
-    fn highest(v: Vec<Option<T>>) -> Option<T> {
-        let mut max: Option<T> = None;
-        for i in v {
-            max = if max.cmp(&i) == Ordering::Greater { max } else { i }; 
-        }
-        max
-    }
-
-    /**
-     * A function that checks wether the graph is cyclic or not. Returns true
-     * if the graph is cyclic, false if not.
-     */
-    fn check_cyclicity(target :u64, current :u64, edges :&Vec<Edge<T>>) -> bool {
-        for i in 0..edges.len() {
-            if edges[i].from == current && edges[i].to == target {
-                return true;
-            } else {
-                if edges[i].from == current {
-                    if DAG::check_cyclicity(target, edges[i].to, edges) {
-                        return true;
-                    }
-                }   
-            }
-        }
-        false
-    }
-
-}
-
-impl <T:Clone+Add<Output=T>+Ord> DAGInterface<T> for DAG<T> {
-
-    fn add_vertex(&mut self, w: T) -> ID {
-        self.vertices.push(Vertex{id: self.next_id, weight: w});
-        self.next_id += 1;  
-        self.next_id-1
-    }
-
-    fn add_edge(&mut self, a: ID, b: ID, w: T) -> Result<bool, &'static str> {
-        self.edges.push(Edge{from: a, to: b, weight: w});
-        if a == b {
-            self.edges.pop();
-            return Err("false");
-        }
-
-        if DAG::check_cyclicity(a,b,&self.edges) {
-            self.edges.pop();
-            return Err("false");
-        }
-
-        Ok(true)
     }
 }
         
