@@ -110,12 +110,16 @@ impl <T:Clone+Add<Output=T>+Ord> DAGInterface<T> for DAG<T> {
         self.edges.push(Edge{from: a, to: b, weight: w});
         if a == b {
             self.edges.pop();
-            return Err("false");
+            return Err("Cannot add edge to itself");
+        }
+
+        if a >= self.next_id || b >= self.next_id {
+            return Err("Cannot add an egde between non-existing vertices");
         }
 
         if DAG::check_cyclicity(a,b,&self.edges) {
             self.edges.pop();
-            return Err("false");
+            return Err("Cannot add edge which creates a cycle");
         }
 
         Ok(true)
@@ -273,6 +277,20 @@ mod tests {
         //Err is the desired result from add.
         if let Ok(_) = dag.add_edge(a,a,19) {
             panic!("Should return error on edge to itself");
+        }
+    }
+
+    #[test]
+    fn test_edge_to_nothing() {
+        let mut dag: DAG<u8> = DAG::new();
+        let a = dag.add_vertex(1);
+
+        if let Ok(_) = dag.add_edge(a+1, a, 1) {
+            panic!("Should not add edge from nothing");
+        }
+
+        if let Ok(_) = dag.add_edge(a, a+1, 1) {
+            panic!("Should not add edge to nothing");
         }
     }
 
