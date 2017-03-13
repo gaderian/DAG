@@ -1,4 +1,4 @@
-mod interface;
+pub mod interface;
 use interface::DAGInterface;
 use std::cmp::Ordering;
 use std::ops::Add;
@@ -24,6 +24,7 @@ pub struct DAG<T:Clone> {
 }
 
 impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
+    /// Creates a new instance of `lab2_dag::DAG`.
     pub fn new() -> DAG<T> {
         DAG {
             vertices: Vec::new(),
@@ -32,6 +33,10 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         }
     }
 
+    /// Splits a `Vec<Vertex<T>>` into two.
+    ///
+    /// One of the vectors will contain all vertices with no edges **to** it,
+    /// the other will contain all other vertices.
     fn split_remaining_v(vec: Vec<Vertex<T>>, edges: & Vec<Edge<T>>) -> (Vec<Vertex<T>>, Vec<Vertex<T>>) {
         let v_iter = vec.clone().into_iter();
         let remaining = vec.into_iter()
@@ -59,6 +64,11 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         (filtered, remaining)
     }
 
+    /// Returns the weight of a specified vertex
+    ///
+    /// #Panics
+    /// The method will panic if the vertex does not exist in the graph but this
+    /// should not be possible.
     fn weight_of_vertex(&self, id: ID) -> T {
         for i in 0..self.vertices.len() {
             let Vertex {id: my_id, weight: ref my_weight} = self.vertices[i];
@@ -69,6 +79,7 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         panic!("Vertex does not exist")
     }
 
+    /// Returns the greatest value in a `Vec<T>`
     fn highest(v: Vec<Option<T>>) -> Option<T> {
         let mut max: Option<T> = None;
         for i in v {
@@ -77,10 +88,9 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         max
     }
 
-    /**
-     * A function that checks wether the graph is cyclic or not. Returns true
-     * if the graph is cyclic, false if not.
-     */
+    /// A function that checks wether the graph is cyclic or not.
+    ///
+    /// Returns true if the graph is cyclic, false if not.
     fn check_cyclicity(target :u64, current :u64, edges :&Vec<Edge<T>>) -> bool {
         for i in 0..edges.len() {
             if edges[i].from == current && edges[i].to == target {
