@@ -131,26 +131,47 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
         max
     }
 
+    /**
+     * A function that checks wether the graph is cyclic or not. Returns true
+     * if the graph is cyclic, false if not.
+     */
+    fn check_cyclicity(target :u64, current :u64, edges :&Vec<Edge<T>>) -> bool {
+        for i in 0..edges.len() {
+            if edges[i].from == current && edges[i].to == target {
+                return true;
+            } else {
+                if edges[i].from == current {
+                    if DAG::check_cyclicity(target, edges[i].to, edges) {
+                        return true;
+                    }
+                }   
+            }
+        }
+        false
+    }
+
 }
 
-impl <T:Clone+Add> DAGInterface<T> for DAG<T> {
+impl <T:Clone+Add<Output=T>+Ord> DAGInterface<T> for DAG<T> {
 
     fn add_vertex(&mut self, w: T) -> ID {
         self.vertices.push(Vertex{id: self.next_id, weight: w});
-        self.next_id += 1;
+        self.next_id += 1;  
         self.next_id-1
     }
 
     fn add_edge(&mut self, a: ID, b: ID, w: T) -> Result<bool, &'static str> {
+        self.edges.push(Edge{from: a, to: b, weight: w});
         if a == b {
+            self.edges.pop();
             return Err("false");
         }
 
-        for i in 0..self.edges.len() {
-            println!("{:?}", self.edges[i].from);
+        if DAG::check_cyclicity(a,b,&self.edges) {
+            self.edges.pop();
+            return Err("false");
         }
 
-        self.edges.push(Edge {from: a, to: b, weight: w});
         Ok(true)
     }
 }
@@ -187,6 +208,48 @@ mod tests {
 
         let tmp = Edge { from: a, to: b, weight: 10 };
         assert_eq!(tmp, dag.edges.pop().unwrap());
+    }
+
+    #[test]
+    fn test_cyclicity_1() {
+        let mut dag: DAG<u8> = DAG::new();
+        let a = dag.add_vertex(1);
+        let b = dag.add_vertex(1);
+        let c = dag.add_vertex(1);
+
+        let _ = dag.add_edge(a,b,2);
+        let _ = dag.add_edge(b,c,3);
+        if let Ok(_) = dag.add_edge(c,a,5) {
+            panic!("Returned ok when breaking cyclicity");
+        }
+    }
+
+    #[test]
+    fn test_cyclicity_2() {
+        let mut dag: DAG<u8> = DAG::new();
+        let a = dag.add_vertex(1);
+        let b = dag.add_vertex(1);
+        let c = dag.add_vertex(1);
+        let d = dag.add_vertex(1);
+        let e = dag.add_vertex(1);
+        let f = dag.add_vertex(1);
+        let g = dag.add_vertex(1);
+        let h = dag.add_vertex(1);
+
+        let _ = dag.add_edge(a,b,1);
+        let _ = dag.add_edge(b,d,1);
+        let _ = dag.add_edge(b,e,1);
+        let _ = dag.add_edge(c,b,1);
+        let _ = dag.add_edge(d,g,1);
+        let _ = dag.add_edge(e,f,1);
+        let _ = dag.add_edge(e,h,1);
+        let _ = dag.add_edge(g,f,1);
+        let _ = dag.add_edge(g,h,1);
+
+        if let Ok(_) = dag.add_edge(h,c,1) {
+            panic!("Returned ok when breaking acyclicity");
+        }
+
     }
 
     #[test]
