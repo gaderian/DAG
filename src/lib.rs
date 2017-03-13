@@ -94,6 +94,10 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
 
         let mut sum: T = self.weight_of_vertex(from);
 
+        if  from == to {
+            return Some(sum);
+        }
+
         let mut weights: Vec<Option<T>> = Vec::new();
 
         for i in 0..self.edges.len() {
@@ -108,6 +112,8 @@ impl <T:Clone+Add<Output=T>+Ord> DAG<T> {
 
         if let Some(high) = DAG::highest(weights) {
             sum = sum + high;
+        } else {
+            return None;
         }
 
         Some(sum)
@@ -219,6 +225,7 @@ mod tests {
     #[test]
     fn test_longest_path() {
         let mut dag: DAG<u8> = DAG::new();
+        let func = &|i| i;
         let a = dag.add_vertex(5);
         let b = dag.add_vertex(8);
 
@@ -230,5 +237,7 @@ mod tests {
         let _ = dag.add_edge(c, b, 5);
 
         assert_eq!(25, dag.weight_of_longest_path(a, b, &|i| i, &|i| i).unwrap());
+
+        assert_eq!(None, dag.weight_of_longest_path(c, a, func, func));
     }
 }
